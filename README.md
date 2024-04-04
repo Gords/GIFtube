@@ -3,7 +3,7 @@
 
 This Bash script allows you to convert a YouTube video to a high-quality GIF file with a specified resolution, frame rate, start time, and duration. It utilizes various tools such as `yt-dlp`, `ffmpeg`, and `gifsicle` to accomplish this task. This script is based on a previous version by fushime2 (https://github.com/fushime2/youtube-to-gif), with some quality-of-life improvements added.
 
-![Alt Text](https://i.postimg.cc/2yV1H0rv/out.gif)
+![alt text](demo.gif)
 
 ## Dependencies
 
