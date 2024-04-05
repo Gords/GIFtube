@@ -17,12 +17,7 @@ The script will attempt to install these dependencies automatically if they are 
 
 1. Save the script 
 2. Run the script with `./make_gif.sh`.
-3. Enter the YouTube URL when prompted.
-4. Enter the desired frames per second (FPS) for the GIF. A value between 10-30 is recommended.
-5. Enter the start time (in seconds) for the video clip.
-6. Enter the duration (in seconds) for the video clip.
-7. Enter the desired output filename for the GIF.
-8. Select the resolution for the GIF (1080p, 720p, 480p, or 240p).
+3. Follow the onscreen prompts.
 
 The script will then download the video, generate a color palette, convert the specified video clip to a GIF using the selected resolution and FPS, and optimize the GIF file for better compression.
 
