@@ -16,8 +16,8 @@ The script will attempt to install these dependencies automatically if they are 
 ## Usage
 
 1. Save the script 
-2. Run the script with `./make_gif.sh`.
-3. Follow the onscreen prompts.
+2. Run the script with `./make_gif.sh`
+3. Follow the onscreen prompts
 
 The script will then download the video, generate a color palette, convert the specified video clip to a GIF using the selected resolution and FPS, and optimize the GIF file for better compression.
 
