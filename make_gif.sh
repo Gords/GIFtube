@@ -99,4 +99,4 @@ echo "Optimization complete."
 
 # Clean up temporary files
 rm "$vname"
-rm "$palette" add more operating systems support
+rm "$palette" 
