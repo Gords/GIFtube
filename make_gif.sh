@@ -20,9 +20,17 @@ dependencies=("yt-dlp" "ffmpeg" "gifsicle")
 
 install_dependencies() {
     if [ "$os_name" == "Linux" ]; then
-        # For Ubuntu/Debian systems
-        sudo apt-get update
-        sudo apt-get install -y "${dependencies[@]}"
+        # Check for Debian/Ubuntu-based systems
+        if [ -f /etc/debian_version ]; then
+            sudo apt-get update
+            sudo apt-get install -y "${dependencies[@]}"
+        # Check for Fedora/Red Hat-based systems
+        elif [ -f /etc/redhat-release ]; then
+            sudo dnf install -y "${dependencies[@]}"
+        else
+            echo "Unsupported Linux distribution"
+            exit 1
+        fi
     elif [ "$os_name" == "Darwin" ]; then
         # For macOS using Homebrew
         brew update
@@ -91,4 +99,4 @@ echo "Optimization complete."
 
 # Clean up temporary files
 rm "$vname"
-rm "$palette"
+rm "$palette" 
