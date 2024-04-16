@@ -11,7 +11,7 @@ Bash script to convert a YouTube video to a high-quality GIF file with a specifi
 - `ffmpeg` (for video processing and GIF generation)
 - `gifsicle` (for optimizing the generated GIF)
 
-The script will attempt to install these dependencies automatically if they are not already present on your system (tested in Ubuntu/Debian and macOS).
+The script will attempt to automatically install these dependencies if they are not already present on your system. It only supports automatic installation on Ubuntu/Debian and macOS; on other operating systems, you will need to install the dependencies manually.
 
 ## Usage
 
