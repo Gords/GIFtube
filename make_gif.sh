@@ -20,25 +20,11 @@ print_error() {
     echo -e "${red}Error: $1${reset}"
 }
 
-# Function to check FFmpeg version
-check_ffmpeg_version() {
-    local version=$(ffmpeg -version | sed -n "s/^ffmpeg version \([0-9]*\.[0-9]*\).*/\1/p" | head -n1)
-    if [ -z "$version" ]; then
-        echo "format=gbrp"
-    else
-        if (( $(echo "$version >= 4.3" | bc -l) )); then
-            echo "zscale=t=linear:npl=100,format=gbrp"
-        else
-            echo "format=gbrp"
-        fi
-    fi
-}
-
 # Detect the operating system
 os_name=$(uname)
 
 # Check and install dependencies based on the operating system
-dependencies=("yt-dlp" "ffmpeg" "gifsicle" "bc")
+dependencies=("yt-dlp" "ffmpeg" "gifsicle")
 
 install_dependencies() {
     if [ "$os_name" == "Linux" ]; then
@@ -139,13 +125,10 @@ if [ ! -f "$vname" ]; then
     exit 1
 fi
 
-# Get the appropriate color conversion filter
-color_filter=$(check_ffmpeg_version)
-
 # Generate color palette
 echo "Generating color palette..."
 palette="_palette.png"
-if ! ffmpeg -v warning -stats -hwaccel auto -ss "$stt" -t "$dur" -i "$vname" -vf "$color_filter,fps=$fps,scale=$new_width:$new_height:flags=lanczos,palettegen=max_colors=256:stats_mode=full" -frames:v 1 -y "$palette" 2>/dev/null; then
+if ! ffmpeg -v warning -stats -hwaccel auto -ss "$stt" -t "$dur" -i "$vname" -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos,palettegen=max_colors=256:stats_mode=full" -y "$palette" 2>/dev/null; then
     print_error "Failed to generate color palette"
     exit 1
 fi
@@ -157,7 +140,7 @@ fi
 
 # Convert the video to GIF using the generated palette
 echo "Converting video to GIF..."
-if ! ffmpeg -v warning -stats -hwaccel auto -ss "$stt" -t "$dur" -i "$vname" -i "$palette" -lavfi "$color_filter,fps=$fps,scale=$new_width:$new_height:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" -y "$output" 2>/dev/null; then
+if ! ffmpeg -v warning -stats -hwaccel auto -ss "$stt" -t "$dur" -i "$vname" -i "$palette" -lavfi "fps=$fps,scale=$new_width:$new_height:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" -y "$output" 2>/dev/null; then
     print_error "Failed to convert video to GIF"
     exit 1
 fi
