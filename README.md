@@ -24,7 +24,7 @@ The script will guide you through the following steps:
 - Specify the desired FPS (frames per second)
 - Set the start time and duration for the GIF
 - Choose the output resolution
-- Select the aspect ratio (new feature!)
+- Select the aspect ratio
 - Enter the output filename
 
 The script will then download the video, generate a color palette, convert the specified video clip to a GIF using the selected resolution, FPS, and aspect ratio, and optimize the GIF file for better compression.
