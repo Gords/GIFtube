@@ -1,5 +1,5 @@
 # GIFtube
-## Youtube to GIF Converter
+## Youtube to GIF Converter.
 
 Bash script to convert a YouTube video to a high-quality GIF file with a specified resolution, frame rate, start time, duration, and aspect ratio. It utilizes `yt-dlp`, `ffmpeg`, and `gifsicle` to accomplish this task. This script is based on a previous version by [fushime2](https://github.com/fushime2/youtube-to-gif) with updated and new libraries, optimization and some other quality-of-life improvements added.
 
