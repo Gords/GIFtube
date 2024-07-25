@@ -40,4 +40,4 @@ The script will then download the video, generate a color palette, convert the s
 
 ## License
 
-This script is released under the [MIT License](https://opensource.org/licenses/MIT).
+This script is released under the [MIT License](https://opensource.org/licenses/MIT)
