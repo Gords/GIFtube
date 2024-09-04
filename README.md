@@ -36,7 +36,7 @@ The script will guide you through the following steps:
 - Select the aspect ratio
 - Enter the output filename
 
-The script will then download the video, generate a color palette, convert the video to a GIF using the selected resolution, FPS, and aspect ratio, and optimize the GIF file for better compression.
+The script will then download the video, generate a color palette, convert the video to GIF using the selected resolution, FPS, and aspect ratio, and optimize the GIF file for better compression.
 
 ## License
 
