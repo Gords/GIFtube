@@ -13,6 +13,7 @@ Bash script to convert a YouTube video to a high-quality GIF file with a specifi
 - Selectable aspect ratio (16:9, 4:3, 1:1, or 9:16)
 - Optimized color palette generation
 - GIF optimization for reduced file size
+- Automatic installation of missing dependencies
 
 ## Dependencies
 
@@ -20,7 +21,7 @@ Bash script to convert a YouTube video to a high-quality GIF file with a specifi
 - `ffmpeg` (for video processing and GIF generation)
 - `gifsicle` (for optimizing the generated GIF)
 
-The script will attempt to automatically install these dependencies if they are not already present on your system. It only supports automatic installation on Ubuntu/Debian and macOS; on other operating systems, you will need to install the dependencies manually.
+The script automatically checks for missing dependencies and offers to install them on supported systems (Ubuntu/Debian, Fedora/Red Hat, Arch Linux, and macOS with Homebrew). If you prefer to install them manually or are using an unsupported system, please install the dependencies before running the script.
 
 ## Usage
 
