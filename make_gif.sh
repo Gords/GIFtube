@@ -27,42 +27,93 @@ os_name=$(uname)
 dependencies=("yt-dlp" "ffmpeg" "gifsicle")
 
 install_dependencies() {
+    deps_to_install=("$@")
     if [ "$os_name" == "Linux" ]; then
         # Check for Debian/Ubuntu-based systems
         if [ -f /etc/debian_version ] || [ -f /etc/lsb-release ]; then
+            if ! sudo -v >/dev/null 2>&1; then
+                print_error "You need sudo privileges to install dependencies."
+                exit 1
+            fi
             sudo apt-get update
-            sudo apt-get install -y "${dependencies[@]}"
+            sudo apt-get install -y "${deps_to_install[@]}"
         # Check for Fedora/Red Hat-based systems
         elif [ -f /etc/redhat-release ]; then
-            sudo dnf install -y "${dependencies[@]}"
+            if ! sudo -v >/dev/null 2>&1; then
+                print_error "You need sudo privileges to install dependencies."
+                exit 1
+            fi
+            sudo dnf install -y "${deps_to_install[@]}"
+        # Check for Arch-based systems
+        elif [ -f /etc/arch-release ]; then
+            if ! sudo -v >/dev/null 2>&1; then
+                print_error "You need sudo privileges to install dependencies."
+                exit 1
+            fi
+            sudo pacman -Sy --noconfirm "${deps_to_install[@]}"
         else
             print_error "Unsupported Linux distribution"
             exit 1
         fi
     elif [ "$os_name" == "Darwin" ]; then
         # For macOS using Homebrew
+        if ! command -v brew >/dev/null 2>&1; then
+            print_error "Homebrew is not installed. Please install Homebrew and rerun the script."
+            exit 1
+        fi
         brew update
-        brew install "${dependencies[@]}"
+        brew install "${deps_to_install[@]}"
     else
         print_error "Unsupported operating system: $os_name"
         exit 1
     fi
 }
 
+missing_deps=()
 for dep in "${dependencies[@]}"
 do
     if ! command -v "$dep" >/dev/null 2>&1; then
-        echo "Installing $dep..."
-        install_dependencies
-        break
+        echo "Dependency $dep is missing."
+        missing_deps+=("$dep")
     fi
 done
+
+if [ "${#missing_deps[@]}" -ne 0 ]; then
+    echo "Missing dependencies detected: ${missing_deps[*]}"
+    read -p "Do you want to install them now? (y/n): " install_choice
+    if [[ "$install_choice" =~ ^[Yy]$ ]]; then
+        install_dependencies "${missing_deps[@]}"
+    else
+        print_error "Cannot proceed without installing dependencies."
+        exit 1
+    fi
+fi
+
+# Function to check if input is a number
+is_number() {
+    [[ "$1" =~ ^[0-9]+([.][0-9]+)?$ ]]
+}
 
 # Prompt the user for input
 read -p "Enter the YouTube URL: " url
 read -p "Enter the desired FPS (recommended: 10-30): " fps
+if ! is_number "$fps"; then
+    print_error "FPS must be a number."
+    exit 1
+fi
+
 read -p "Enter the start time (in seconds): " stt
+if ! is_number "$stt"; then
+    print_error "Start time must be a number."
+    exit 1
+fi
+
 read -p "Enter the duration (in seconds): " dur
+if ! is_number "$dur"; then
+    print_error "Duration must be a number."
+    exit 1
+fi
+
 read -p "Enter the output filename (without .gif extension): " output
 
 # Automatically append .gif to the filename if not present
@@ -78,12 +129,16 @@ echo "3. 480p"
 echo "4. 240p"
 read -p "Enter your choice (1-4): " choice
 
+if [[ ! "$choice" =~ ^[1-4]$ ]]; then
+    print_error "Invalid choice. Defaulting to 720p."
+    choice=2
+fi
+
 case $choice in
     1) width=1920; height=1080;;
     2) width=1280; height=720;;
     3) width=854; height=480;;
     4) width=426; height=240;;
-    *) echo "Invalid choice. Defaulting to 720p."; width=1280; height=720;;
 esac
 
 # Prompt the user to select the aspect ratio
@@ -94,12 +149,16 @@ echo "3. 1:1 (Square)"
 echo "4. 9:16 (Vertical Video)"
 read -p "Enter your choice (1-4): " aspect_choice
 
+if [[ ! "$aspect_choice" =~ ^[1-4]$ ]]; then
+    print_error "Invalid choice. Defaulting to 16:9."
+    aspect_choice=1
+fi
+
 case $aspect_choice in
     1) aspect_w=16; aspect_h=9;;
     2) aspect_w=4; aspect_h=3;;
     3) aspect_w=1; aspect_h=1;;
     4) aspect_w=9; aspect_h=16;;
-    *) echo "Invalid choice. Defaulting to 16:9."; aspect_w=16; aspect_h=9;;
 esac
 
 # Calculate the new dimensions based on the aspect ratio
@@ -145,7 +204,7 @@ if ! ffmpeg -v warning -stats -hwaccel auto -ss "$stt" -t "$dur" -i "$vname" -i 
     exit 1
 fi
 
-# Optimize the GIF using gifsicle with a progress indicator
+# Optimize the GIF using gifsicle
 echo "Optimizing GIF..."
 if ! gifsicle -O3 --lossy=80 -o "optimized_$output" "$output"; then
     print_error "Failed to optimize GIF"
