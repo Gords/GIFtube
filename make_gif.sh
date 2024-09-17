@@ -20,6 +20,58 @@ print_error() {
     echo -e "${red}Error: $1${reset}"
 }
 
+# Function to update yt-dlp to the latest version without using pip
+update_yt_dlp() {
+    echo "Checking if yt-dlp is up to date..."
+    if yt-dlp -U >/dev/null 2>&1; then
+        echo "yt-dlp is up to date or has been updated."
+    else
+        echo "Failed to update yt-dlp using 'yt-dlp -U'. Downloading the latest release binary..."
+        # Determine the correct URL for the latest release
+        latest_url="https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp"
+
+        # Determine installation directory
+        if [ -w "/usr/local/bin" ]; then
+            install_dir="/usr/local/bin"
+        elif [ -w "$HOME/.local/bin" ]; then
+            install_dir="$HOME/.local/bin"
+            mkdir -p "$install_dir"
+        else
+            print_error "Cannot write to /usr/local/bin or ~/.local/bin. Please run the script with appropriate permissions."
+            exit 1
+        fi
+
+        # Download the latest binary
+        if command -v curl >/dev/null 2>&1; then
+            if curl -L "$latest_url" -o "$install_dir/yt-dlp"; then
+                chmod a+rx "$install_dir/yt-dlp"
+                echo "yt-dlp has been updated and installed to $install_dir/yt-dlp."
+            else
+                print_error "Failed to download yt-dlp using curl."
+                exit 1
+            fi
+        elif command -v wget >/dev/null 2>&1; then
+            if wget "$latest_url" -O "$install_dir/yt-dlp"; then
+                chmod a+rx "$install_dir/yt-dlp"
+                echo "yt-dlp has been updated and installed to $install_dir/yt-dlp."
+            else
+                print_error "Failed to download yt-dlp using wget."
+                exit 1
+            fi
+        else
+            print_error "Neither curl nor wget is installed. Cannot download yt-dlp."
+            exit 1
+        fi
+
+        # Add install_dir to PATH if it's not already there
+        if ! echo "$PATH" | grep -q "$install_dir"; then
+            export PATH="$install_dir:$PATH"
+            echo "export PATH=\"$install_dir:\$PATH\"" >> "$HOME/.bashrc"
+            echo "Added $install_dir to PATH."
+        fi
+    fi
+}
+
 # Detect the operating system
 os_name=$(uname)
 
@@ -69,6 +121,12 @@ install_dependencies() {
     fi
 }
 
+# Check if curl or wget is installed
+if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
+    echo "Neither curl nor wget is installed."
+    missing_deps+=("curl")
+fi
+
 missing_deps=()
 for dep in "${dependencies[@]}"
 do
@@ -88,6 +146,9 @@ if [ "${#missing_deps[@]}" -ne 0 ]; then
         exit 1
     fi
 fi
+
+# Update yt-dlp to the latest version
+update_yt_dlp
 
 # Function to check if input is a number
 is_number() {
