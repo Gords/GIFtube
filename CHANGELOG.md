@@ -1,7 +1,5 @@
 # Changelog
 
-## [Unreleased]
-
 ### Added
 
 - **Update Functionality for yt-dlp Without pip**: Modified the `update_yt_dlp` function to download the latest `yt-dlp` binary directly from the official GitHub releases, avoiding dependency on `pip`. The script now:
