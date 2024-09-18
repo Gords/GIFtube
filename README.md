@@ -26,7 +26,7 @@ The script automatically checks for missing dependencies and offers to install t
 ## Usage
 
 1. Save the script 
-2. Run the script with `./make_gif.sh`
+2. Run the script with `./make_gif.sh` (or `sudo ./make_gif.sh` on Linux if it is your first time running it and you want the dependencies to be automatically installed).
 3. Follow the onscreen prompts
 
 The script will guide you through the following steps:
