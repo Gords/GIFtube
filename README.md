@@ -3,7 +3,7 @@
 
 Bash script to convert a YouTube video to a high-quality GIF file with a specified resolution, frame rate, start time, duration, aspect ratio, and quality. It utilizes `yt-dlp`, `ffmpeg`, and `gifski` to accomplish this task efficiently.
 
-![alt text](demo.gif)
+![Berserk (1997). © Kentaro Miura, Hakusensha / VAP • NTV](demo.gif)
 
 ## Features
 
@@ -46,6 +46,7 @@ The script will then download the video and convert it directly to a high-qualit
 - Medium: 80 (Good balance between quality and file size)
 - Low: 60 (Smaller file size, lower quality)
 - Custom: 1-100 (User-defined, higher values mean better quality but larger file size)
+
 
 ## License
 
