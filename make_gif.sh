@@ -196,12 +196,32 @@ if ! is_number "$dur"; then
     exit 1
 fi
 
-read -p "Enter the output filename (without .gif extension): " output
+# Prompt the user to select the quality
+echo "Select the quality:"
+echo "1. High (100)"
+echo "2. Medium (80)"
+echo "3. Low (60)"
+echo "4. Custom"
+read -p "Enter your choice (1-4): " quality_choice
 
-# Automatically append .gif to the filename if not present
-if [[ $output != *.gif ]]; then
-    output="${output}.gif"
-fi
+case $quality_choice in
+    1) quality=100;;
+    2) quality=80;;
+    3) quality=60;;
+    4) 
+        read -p "Enter custom quality (1-100): " custom_quality
+        if ! is_number "$custom_quality" || [ "$custom_quality" -lt 1 ] || [ "$custom_quality" -gt 100 ]; then
+            print_error "Invalid quality. Defaulting to Medium (80)."
+            quality=80
+        else
+            quality=$custom_quality
+        fi
+        ;;
+    *)
+        print_error "Invalid choice. Defaulting to Medium (80)."
+        quality=80
+        ;;
+esac
 
 # Prompt the user to select the resolution
 echo "Select the resolution:"
@@ -243,6 +263,13 @@ case $aspect_choice in
     4) aspect_w=9; aspect_h=16;;
 esac
 
+read -p "Enter the output filename (without .gif extension): " output
+
+# Automatically append .gif to the filename if not present
+if [[ $output != *.gif ]]; then
+    output="${output}.gif"
+fi
+
 # Calculate the new dimensions based on the aspect ratio
 if [ $((width*aspect_h)) -gt $((height*aspect_w)) ]; then
     new_height=$height
@@ -268,7 +295,7 @@ fi
 
 # Convert the video to GIF using ffmpeg and gifski
 echo "Converting video to GIF..."
-if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos" -f yuv4mpegpipe - | gifski -o "$output" --fps $fps --quality 80 -; then
+if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos" -f yuv4mpegpipe - | gifski -o "$output" --fps $fps --quality $quality -; then
     print_error "Failed to convert video to GIF"
     exit 1
 fi

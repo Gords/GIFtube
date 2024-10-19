@@ -1,7 +1,7 @@
 # GIFtube
-## Youtube to GIF Converter
+## YouTube to GIF Converter
 
-Bash script to convert a YouTube video to a high-quality GIF file with a specified resolution, frame rate, start time, duration, and aspect ratio. It utilizes `yt-dlp`, `ffmpeg`, and `gifsicle` to accomplish this task.
+Bash script to convert a YouTube video to a high-quality GIF file with a specified resolution, frame rate, start time, duration, aspect ratio, and quality. It utilizes `yt-dlp`, `ffmpeg`, and `gifski` to accomplish this task efficiently.
 
 ![alt text](demo.gif)
 
@@ -11,15 +11,15 @@ Bash script to convert a YouTube video to a high-quality GIF file with a specifi
 - Convert video clips to high-quality GIFs
 - Customizable resolution and frame rate
 - Selectable aspect ratio (16:9, 4:3, 1:1, or 9:16)
-- Optimized color palette generation
-- GIF optimization for reduced file size
+- Adjustable quality settings
+- Direct conversion from video to GIF without intermediate files
 - Automatic installation of missing dependencies
 
 ## Dependencies
 
 - `yt-dlp` (for downloading YouTube videos)
-- `ffmpeg` (for video processing and GIF generation)
-- `gifsicle` (for optimizing the generated GIF)
+- `ffmpeg` (for video processing)
+- `gifski` (for high-quality GIF generation)
 
 The script automatically checks for missing dependencies and offers to install them on supported systems (Ubuntu/Debian, Fedora/Red Hat, Arch Linux, and macOS with Homebrew). If you prefer to install them manually or are using an unsupported system, please install the dependencies before running the script.
 
@@ -35,9 +35,17 @@ The script will guide you through the following steps:
 - Set the start time and duration for the GIF
 - Choose the output resolution
 - Select the aspect ratio
+- Choose the quality setting (High, Medium, Low, or Custom)
 - Enter the output filename
 
-The script will then download the video, generate a color palette, convert the video to GIF using the selected resolution, FPS, and aspect ratio, and optimize the GIF file for better compression.
+The script will then download the video and convert it directly to a high-quality GIF using the selected parameters.
+
+## Quality Settings
+
+- High: 100 (Best quality, largest file size)
+- Medium: 80 (Good balance between quality and file size)
+- Low: 60 (Smaller file size, lower quality)
+- Custom: 1-100 (User-defined, higher values mean better quality but larger file size)
 
 ## License
 
