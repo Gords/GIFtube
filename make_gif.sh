@@ -76,7 +76,7 @@ update_yt_dlp() {
 os_name=$(uname)
 
 # Check and install dependencies based on the operating system
-dependencies=("yt-dlp" "ffmpeg" "gifsicle")
+dependencies=("yt-dlp" "ffmpeg" "gifski")
 
 install_dependencies() {
     deps_to_install=("$@")
@@ -89,6 +89,13 @@ install_dependencies() {
             fi
             sudo apt-get update
             sudo apt-get install -y "${deps_to_install[@]}"
+            # Install Rust and gifski
+            if ! command -v cargo &> /dev/null; then
+                echo "Installing Rust..."
+                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+                source $HOME/.cargo/env
+            fi
+            cargo install gifski
         # Check for Fedora/Red Hat-based systems
         elif [ -f /etc/redhat-release ]; then
             if ! sudo -v >/dev/null 2>&1; then
@@ -96,6 +103,13 @@ install_dependencies() {
                 exit 1
             fi
             sudo dnf install -y "${deps_to_install[@]}"
+            # Install Rust and gifski
+            if ! command -v cargo &> /dev/null; then
+                echo "Installing Rust..."
+                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+                source $HOME/.cargo/env
+            fi
+            cargo install gifski
         # Check for Arch-based systems
         elif [ -f /etc/arch-release ]; then
             if ! sudo -v >/dev/null 2>&1; then
@@ -103,6 +117,13 @@ install_dependencies() {
                 exit 1
             fi
             sudo pacman -Sy --noconfirm "${deps_to_install[@]}"
+            # Install Rust and gifski
+            if ! command -v cargo &> /dev/null; then
+                echo "Installing Rust..."
+                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+                source $HOME/.cargo/env
+            fi
+            cargo install gifski
         else
             print_error "Unsupported Linux distribution"
             exit 1
@@ -245,37 +266,16 @@ if [ ! -f "$vname" ]; then
     exit 1
 fi
 
-# Generate color palette
-echo "Generating color palette..."
-palette="_palette.png"
-if ! ffmpeg -v warning -stats -hwaccel auto -ss "$stt" -t "$dur" -i "$vname" -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos,palettegen=max_colors=256:stats_mode=full" -y "$palette" 2>/dev/null; then
-    print_error "Failed to generate color palette"
-    exit 1
-fi
-
-if [ ! -f "$palette" ]; then
-    print_error "Palette file not found after generation"
-    exit 1
-fi
-
-# Convert the video to GIF using the generated palette
+# Convert the video to GIF using ffmpeg and gifski
 echo "Converting video to GIF..."
-if ! ffmpeg -v warning -stats -hwaccel auto -ss "$stt" -t "$dur" -i "$vname" -i "$palette" -lavfi "fps=$fps,scale=$new_width:$new_height:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" -y "$output" 2>/dev/null; then
+if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos" -f yuv4mpegpipe - | gifski -o "$output" --fps $fps --quality 80 -; then
     print_error "Failed to convert video to GIF"
     exit 1
 fi
 
-# Optimize the GIF using gifsicle
-echo "Optimizing GIF..."
-if ! gifsicle -O3 --lossy=80 -o "optimized_$output" "$output"; then
-    print_error "Failed to optimize GIF"
-    exit 1
-fi
-
-echo "Optimization complete."
+echo "Conversion complete."
 
 # Clean up temporary files
 rm -f "$vname"
-rm -f "$palette"
 
-echo "Process completed successfully! Your GIF is saved as 'optimized_$output'."
+echo "Process completed successfully! Your GIF is saved as '$output'."
