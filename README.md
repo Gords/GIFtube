@@ -31,10 +31,10 @@ The script automatically checks for missing dependencies and offers to install t
 
 The script will guide you through the following steps:
 - Enter the YouTube URL
-- Specify the desired FPS (frames per second)
 - Set the start time and duration for the GIF
 - Choose the output resolution
 - Select the aspect ratio
+- Specify the desired FPS (frames per second)
 - Choose the quality setting (High, Medium, Low, or Custom)
 - Enter the output filename
 
