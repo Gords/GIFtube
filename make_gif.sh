@@ -178,11 +178,6 @@ is_number() {
 
 # Prompt the user for input
 read -p "Enter the YouTube URL: " url
-read -p "Enter the desired FPS (recommended: 10-30): " fps
-if ! is_number "$fps"; then
-    print_error "FPS must be a number."
-    exit 1
-fi
 
 read -p "Enter the start time (in seconds): " stt
 if ! is_number "$stt"; then
@@ -195,33 +190,6 @@ if ! is_number "$dur"; then
     print_error "Duration must be a number."
     exit 1
 fi
-
-# Prompt the user to select the quality
-echo "Select the quality:"
-echo "1. High (100)"
-echo "2. Medium (80)"
-echo "3. Low (60)"
-echo "4. Custom"
-read -p "Enter your choice (1-4): " quality_choice
-
-case $quality_choice in
-    1) quality=100;;
-    2) quality=80;;
-    3) quality=60;;
-    4) 
-        read -p "Enter custom quality (1-100): " custom_quality
-        if ! is_number "$custom_quality" || [ "$custom_quality" -lt 1 ] || [ "$custom_quality" -gt 100 ]; then
-            print_error "Invalid quality. Defaulting to Medium (80)."
-            quality=80
-        else
-            quality=$custom_quality
-        fi
-        ;;
-    *)
-        print_error "Invalid choice. Defaulting to Medium (80)."
-        quality=80
-        ;;
-esac
 
 # Prompt the user to select the resolution
 echo "Select the resolution:"
@@ -261,6 +229,39 @@ case $aspect_choice in
     2) aspect_w=4; aspect_h=3;;
     3) aspect_w=1; aspect_h=1;;
     4) aspect_w=9; aspect_h=16;;
+esac
+
+read -p "Enter the desired FPS (recommended: 10-30): " fps
+if ! is_number "$fps"; then
+    print_error "FPS must be a number."
+    exit 1
+fi
+
+# Prompt the user to select the quality
+echo "Select the quality:"
+echo "1. High (100)"
+echo "2. Medium (80)"
+echo "3. Low (60)"
+echo "4. Custom"
+read -p "Enter your choice (1-4): " quality_choice
+
+case $quality_choice in
+    1) quality=100;;
+    2) quality=80;;
+    3) quality=60;;
+    4) 
+        read -p "Enter custom quality (1-100): " custom_quality
+        if ! is_number "$custom_quality" || [ "$custom_quality" -lt 1 ] || [ "$custom_quality" -gt 100 ]; then
+            print_error "Invalid quality. Defaulting to Medium (80)."
+            quality=80
+        else
+            quality=$custom_quality
+        fi
+        ;;
+    *)
+        print_error "Invalid choice. Defaulting to Medium (80)."
+        quality=80
+        ;;
 esac
 
 read -p "Enter the output filename (without .gif extension): " output
