@@ -76,7 +76,7 @@ update_yt_dlp() {
 os_name=$(uname)
 
 # Check and install dependencies based on the operating system
-dependencies=("yt-dlp" "ffmpeg" "gifsicle")
+dependencies=("yt-dlp" "ffmpeg" "gifski")
 
 install_dependencies() {
     deps_to_install=("$@")
@@ -88,7 +88,18 @@ install_dependencies() {
                 exit 1
             fi
             sudo apt-get update
-            sudo apt-get install -y "${deps_to_install[@]}"
+            for dep in "${deps_to_install[@]}"; do
+                if [ "$dep" = "gifski" ]; then
+                    if ! command -v gifski &> /dev/null; then
+                        echo "Installing gifski from .deb package..."
+                        wget https://github.com/ImageOptim/gifski/releases/download/1.32.0/gifski_1.32.0-1_amd64.deb
+                        sudo dpkg -i gifski_1.32.0-1_amd64.deb
+                        rm gifski_1.32.0-1_amd64.deb
+                    fi
+                else
+                    sudo apt-get install -y "$dep"
+                fi
+            done
         # Check for Fedora/Red Hat-based systems
         elif [ -f /etc/redhat-release ]; then
             if ! sudo -v >/dev/null 2>&1; then
@@ -96,6 +107,13 @@ install_dependencies() {
                 exit 1
             fi
             sudo dnf install -y "${deps_to_install[@]}"
+            # Install Rust and gifski
+            if ! command -v cargo &> /dev/null; then
+                echo "Installing Rust..."
+                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+                source $HOME/.cargo/env
+            fi
+            cargo install gifski
         # Check for Arch-based systems
         elif [ -f /etc/arch-release ]; then
             if ! sudo -v >/dev/null 2>&1; then
@@ -103,6 +121,13 @@ install_dependencies() {
                 exit 1
             fi
             sudo pacman -Sy --noconfirm "${deps_to_install[@]}"
+            # Install Rust and gifski
+            if ! command -v cargo &> /dev/null; then
+                echo "Installing Rust..."
+                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+                source $HOME/.cargo/env
+            fi
+            cargo install gifski
         else
             print_error "Unsupported Linux distribution"
             exit 1
@@ -157,11 +182,6 @@ is_number() {
 
 # Prompt the user for input
 read -p "Enter the YouTube URL: " url
-read -p "Enter the desired FPS (recommended: 10-30): " fps
-if ! is_number "$fps"; then
-    print_error "FPS must be a number."
-    exit 1
-fi
 
 read -p "Enter the start time (in seconds): " stt
 if ! is_number "$stt"; then
@@ -173,13 +193,6 @@ read -p "Enter the duration (in seconds): " dur
 if ! is_number "$dur"; then
     print_error "Duration must be a number."
     exit 1
-fi
-
-read -p "Enter the output filename (without .gif extension): " output
-
-# Automatically append .gif to the filename if not present
-if [[ $output != *.gif ]]; then
-    output="${output}.gif"
 fi
 
 # Prompt the user to select the resolution
@@ -222,6 +235,46 @@ case $aspect_choice in
     4) aspect_w=9; aspect_h=16;;
 esac
 
+read -p "Enter the desired FPS (recommended: 10-30): " fps
+if ! is_number "$fps"; then
+    print_error "FPS must be a number."
+    exit 1
+fi
+
+# Prompt the user to select the quality
+echo "Select the quality:"
+echo "1. High (100)"
+echo "2. Medium (80)"
+echo "3. Low (60)"
+echo "4. Custom"
+read -p "Enter your choice (1-4): " quality_choice
+
+case $quality_choice in
+    1) quality=100;;
+    2) quality=80;;
+    3) quality=60;;
+    4) 
+        read -p "Enter custom quality (1-100): " custom_quality
+        if ! is_number "$custom_quality" || [ "$custom_quality" -lt 1 ] || [ "$custom_quality" -gt 100 ]; then
+            print_error "Invalid quality. Defaulting to Medium (80)."
+            quality=80
+        else
+            quality=$custom_quality
+        fi
+        ;;
+    *)
+        print_error "Invalid choice. Defaulting to Medium (80)."
+        quality=80
+        ;;
+esac
+
+read -p "Enter the output filename (without .gif extension): " output
+
+# Automatically append .gif to the filename if not present
+if [[ $output != *.gif ]]; then
+    output="${output}.gif"
+fi
+
 # Calculate the new dimensions based on the aspect ratio
 if [ $((width*aspect_h)) -gt $((height*aspect_w)) ]; then
     new_height=$height
@@ -245,37 +298,16 @@ if [ ! -f "$vname" ]; then
     exit 1
 fi
 
-# Generate color palette
-echo "Generating color palette..."
-palette="_palette.png"
-if ! ffmpeg -v warning -stats -hwaccel auto -ss "$stt" -t "$dur" -i "$vname" -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos,palettegen=max_colors=256:stats_mode=full" -y "$palette" 2>/dev/null; then
-    print_error "Failed to generate color palette"
-    exit 1
-fi
-
-if [ ! -f "$palette" ]; then
-    print_error "Palette file not found after generation"
-    exit 1
-fi
-
-# Convert the video to GIF using the generated palette
+# Convert the video to GIF using ffmpeg and gifski
 echo "Converting video to GIF..."
-if ! ffmpeg -v warning -stats -hwaccel auto -ss "$stt" -t "$dur" -i "$vname" -i "$palette" -lavfi "fps=$fps,scale=$new_width:$new_height:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle" -y "$output" 2>/dev/null; then
+if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos" -f yuv4mpegpipe - | gifski -o "$output" --fps $fps --quality $quality -; then
     print_error "Failed to convert video to GIF"
     exit 1
 fi
 
-# Optimize the GIF using gifsicle
-echo "Optimizing GIF..."
-if ! gifsicle -O3 --lossy=80 -o "optimized_$output" "$output"; then
-    print_error "Failed to optimize GIF"
-    exit 1
-fi
-
-echo "Optimization complete."
+echo "Conversion complete."
 
 # Clean up temporary files
 rm -f "$vname"
-rm -f "$palette"
 
-echo "Process completed successfully! Your GIF is saved as 'optimized_$output'."
+echo "Process completed successfully! Your GIF is saved as '$output'."
