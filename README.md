@@ -21,7 +21,13 @@ Bash script to convert a YouTube video to a high-quality GIF file with a specifi
 - `ffmpeg` (for video processing)
 - `gifski` (for high-quality GIF generation)
 
-The script automatically checks for missing dependencies and offers to install them on supported systems (Ubuntu/Debian, Fedora/Red Hat, Arch Linux, and macOS with Homebrew). If you prefer to install them manually or are using an unsupported system, please install the dependencies before running the script.
+The script automatically checks for missing dependencies and offers to install them on supported systems:
+- Ubuntu/Debian: Uses apt-get for yt-dlp and ffmpeg, and installs gifski from a .deb package
+- Fedora/Red Hat: Uses dnf
+- Arch Linux: Uses pacman
+- macOS: Uses Homebrew
+
+If you prefer to install them manually or are using an unsupported system, please install the dependencies before running the script.
 
 ## Usage
 
