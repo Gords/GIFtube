@@ -88,14 +88,18 @@ install_dependencies() {
                 exit 1
             fi
             sudo apt-get update
-            sudo apt-get install -y "${deps_to_install[@]}"
-            # Install Rust and gifski
-            if ! command -v cargo &> /dev/null; then
-                echo "Installing Rust..."
-                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-                source $HOME/.cargo/env
-            fi
-            cargo install gifski
+            for dep in "${deps_to_install[@]}"; do
+                if [ "$dep" = "gifski" ]; then
+                    if ! command -v gifski &> /dev/null; then
+                        echo "Installing gifski from .deb package..."
+                        wget https://github.com/ImageOptim/gifski/releases/download/1.32.0/gifski_1.32.0-1_amd64.deb
+                        sudo dpkg -i gifski_1.32.0-1_amd64.deb
+                        rm gifski_1.32.0-1_amd64.deb
+                    fi
+                else
+                    sudo apt-get install -y "$dep"
+                fi
+            done
         # Check for Fedora/Red Hat-based systems
         elif [ -f /etc/redhat-release ]; then
             if ! sudo -v >/dev/null 2>&1; then
