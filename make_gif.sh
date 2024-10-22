@@ -153,7 +153,7 @@ uninstall_dependencies() {
                 rm -f "gifski_1.32.0-1_amd64.deb"
             fi
         else
-            print_error "Unsupported Linux distribution. Only Debian-based distributions are supported."
+            print_error "Unsupported Linux distribution. Please uninstall the dependencies manually."
             exit 1
         fi
     elif [ "$os_name" == "Darwin" ]; then
