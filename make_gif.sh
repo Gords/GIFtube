@@ -15,9 +15,24 @@ echo -e "${green}
 88eee8 88 88      88  88ee8 88eeeee8 88eee 
 ${reset}"
 
+# Configuration file to store user preferences
+CONFIG_FILE="$HOME/.make_gif_config"
+
 # Function to print error messages
 print_error() {
     echo -e "${red}Error: $1${reset}"
+}
+
+# Function to load configuration
+load_config() {
+    if [ -f "$CONFIG_FILE" ]; then
+        source "$CONFIG_FILE"
+    fi
+}
+
+# Function to save configuration
+save_config() {
+    echo "install_gifski=$1" > "$CONFIG_FILE"
 }
 
 # Function to update yt-dlp to the latest version without using pip
@@ -75,9 +90,11 @@ update_yt_dlp() {
 # Detect the operating system
 os_name=$(uname)
 
-# Check and install dependencies based on the operating system
-dependencies=("yt-dlp" "ffmpeg" "gifski")
+# Define mandatory and optional dependencies
+mandatory_dependencies=("yt-dlp" "ffmpeg")
+optional_dependency="gifski"
 
+# Function to install dependencies
 install_dependencies() {
     deps_to_install=("$@")
     if [ "$os_name" == "Linux" ]; then
@@ -89,46 +106,21 @@ install_dependencies() {
             fi
             for dep in "${deps_to_install[@]}"; do
                 if [ "$dep" = "gifski" ]; then
-                    if ! command -v gifski &> /dev/null; then
-                        echo "Installing gifski from .deb package..."
-                        wget https://github.com/ImageOptim/gifski/releases/download/1.32.0/gifski_1.32.0-1_amd64.deb
+                    echo "Installing gifski from .deb package..."
+                    wget https://github.com/ImageOptim/gifski/releases/download/1.32.0/gifski_1.32.0-1_amd64.deb
+                    sudo dpkg -i gifski_1.32.0-1_amd64.deb || {
+                        echo "Fixing missing dependencies..."
+                        sudo apt-get install -f -y
                         sudo dpkg -i gifski_1.32.0-1_amd64.deb
-                        rm gifski_1.32.0-1_amd64.deb
-                    fi
+                    }
+                    rm gifski_1.32.0-1_amd64.deb
+                    echo "gifski has been installed."
                 else
                     sudo apt-get install -y "$dep"
                 fi
             done
-        # Check for Fedora/Red Hat-based systems
-        elif [ -f /etc/redhat-release ]; then
-            if ! sudo -v >/dev/null 2>&1; then
-                print_error "You need sudo privileges to install dependencies."
-                exit 1
-            fi
-            sudo dnf install -y "${deps_to_install[@]}"
-            # Install Rust and gifski
-            if ! command -v cargo &> /dev/null; then
-                echo "Installing Rust..."
-                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-                source $HOME/.cargo/env
-            fi
-            cargo install gifski
-        # Check for Arch-based systems
-        elif [ -f /etc/arch-release ]; then
-            if ! sudo -v >/dev/null 2>&1; then
-                print_error "You need sudo privileges to install dependencies."
-                exit 1
-            fi
-            sudo pacman -Sy --noconfirm "${deps_to_install[@]}"
-            # Install Rust and gifski
-            if ! command -v cargo &> /dev/null; then
-                echo "Installing Rust..."
-                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-                source $HOME/.cargo/env
-            fi
-            cargo install gifski
         else
-            print_error "Unsupported Linux distribution"
+            print_error "Unsupported Linux distribution. Only Debian-based distributions are supported."
             exit 1
         fi
     elif [ "$os_name" == "Darwin" ]; then
@@ -144,30 +136,110 @@ install_dependencies() {
     fi
 }
 
-# Check if curl or wget is installed
-if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
-    echo "Neither curl nor wget is installed."
-    missing_deps+=("curl")
-fi
+uninstall_dependencies() {
+    echo "Uninstalling dependencies..."
+    
+    if [ "$os_name" == "Linux" ]; then
+        if [ -f /etc/debian_version ] || [ -f /etc/lsb-release ]; then
+            if ! sudo -v >/dev/null 2>&1; then
+                print_error "You need sudo privileges to uninstall dependencies."
+                exit 1
+            fi
+            sudo apt-get remove -y yt-dlp ffmpeg gifski
+            sudo apt-get autoremove -y
+            
+            # Remove the manually downloaded .deb file if it exists
+            if [ -f "gifski_1.32.0-1_amd64.deb" ]; then
+                rm -f "gifski_1.32.0-1_amd64.deb"
+            fi
+        else
+            print_error "Unsupported Linux distribution. Only Debian-based distributions are supported."
+            exit 1
+        fi
+    elif [ "$os_name" == "Darwin" ]; then
+        if ! command -v brew >/dev/null 2>&1; then
+            print_error "Homebrew is not installed. Cannot uninstall dependencies."
+            exit 1
+        fi
+        brew uninstall yt-dlp ffmpeg gifski
+    else
+        print_error "Unsupported operating system: $os_name"
+        exit 1
+    fi
+    
+    # Remove yt-dlp binary if it was installed manually
+    if [ -f "/usr/local/bin/yt-dlp" ]; then
+        sudo rm -f "/usr/local/bin/yt-dlp"
+    elif [ -f "$HOME/.local/bin/yt-dlp" ]; then
+        rm -f "$HOME/.local/bin/yt-dlp"
+    fi
+    
+    # Remove gifski binary if it was installed manually
+    if [ -f "/usr/local/bin/gifski" ]; then
+        sudo rm -f "/usr/local/bin/gifski"
+    elif [ -f "$HOME/.local/bin/gifski" ]; then
+        rm -f "$HOME/.local/bin/gifski"
+    fi
+    
+    # Remove the configuration file
+    rm -f "$CONFIG_FILE"
+    
+    echo "Uninstallation complete."
+    exit 0
+}
 
-missing_deps=()
-for dep in "${dependencies[@]}"
-do
+# Load existing configuration
+load_config
+
+# Check and install mandatory dependencies
+missing_mandatory_deps=()
+for dep in "${mandatory_dependencies[@]}"; do
     if ! command -v "$dep" >/dev/null 2>&1; then
         echo "Dependency $dep is missing."
-        missing_deps+=("$dep")
+        missing_mandatory_deps+=("$dep")
     fi
 done
 
-if [ "${#missing_deps[@]}" -ne 0 ]; then
-    echo "Missing dependencies detected: ${missing_deps[*]}"
-    read -p "Do you want to install them now? (y/n): " install_choice
+if [ "${#missing_mandatory_deps[@]}" -ne 0 ]; then
+    echo "Installing missing mandatory dependencies: ${missing_mandatory_deps[*]}"
+    install_dependencies "${missing_mandatory_deps[@]}"
+fi
+
+# Function to prompt for optional gifski installation
+prompt_optional_gifski() {
+    echo -n "Optional: Do you want to install gifski for better quality GIFs? (y/n): "
+    read -r install_choice
     if [[ "$install_choice" =~ ^[Yy]$ ]]; then
-        install_dependencies "${missing_deps[@]}"
+        echo "Installing gifski..."
+        install_dependencies "$optional_dependency"
+        install_gifski="yes"
+        save_config "yes"
     else
-        print_error "Cannot proceed without installing dependencies."
-        exit 1
+        echo "Skipping gifski installation."
+        install_gifski="no"
+        save_config "no"
     fi
+}
+
+# Check if gifski is installed
+if ! command -v gifski >/dev/null 2>&1; then
+    if [ -z "$install_gifski" ]; then
+        prompt_optional_gifski
+    fi
+else
+    install_gifski="yes"
+fi
+
+# If gifski is installed, add it to dependencies if not already present
+if [ "$install_gifski" == "yes" ]; then
+    dependencies=("yt-dlp" "ffmpeg" "gifski")
+else
+    dependencies=("yt-dlp" "ffmpeg")
+fi
+
+# Check for uninstall argument
+if [ "$1" == "--uninstall" ]; then
+    uninstall_dependencies
 fi
 
 # Update yt-dlp to the latest version
@@ -296,11 +368,39 @@ if [ ! -f "$vname" ]; then
     exit 1
 fi
 
-# Convert the video to GIF using ffmpeg and gifski
-echo "Converting video to GIF..."
-if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos" -f yuv4mpegpipe - | gifski -o "$output" --fps $fps --quality $quality -; then
-    print_error "Failed to convert video to GIF"
-    exit 1
+# Function to convert video to GIF using ffmpeg and gifski
+convert_with_gifski() {
+    echo "Converting video to GIF using gifski..."
+    if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos" -f yuv4mpegpipe - | gifski -o "$output" --fps $fps --quality $quality -; then
+        print_error "Failed to convert video to GIF with gifski"
+        exit 1
+    fi
+}
+
+# Function to convert video to GIF using only ffmpeg with palette optimization
+convert_with_ffmpeg() {
+    echo "Converting video to GIF using ffmpeg with palette optimization..."
+    palette="/tmp/palette.png"
+    gif_temp="/tmp/temp.gif"
+
+    # Generate palette
+    ffmpeg -v warning -y -ss "$stt" -t "$dur" -i "$vname" -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos,palettegen" "$palette"
+
+    # Generate GIF using the palette
+    if ! ffmpeg -v warning -y -ss "$stt" -t "$dur" -i "$vname" -i "$palette" -filter_complex "fps=$fps,scale=$new_width:$new_height:flags=lanczos [x]; [x][1:v] paletteuse" "$output"; then
+        print_error "Failed to convert video to GIF with ffmpeg"
+        exit 1
+    fi
+
+    # Clean up palette and temporary GIF
+    rm -f "$palette" "$gif_temp"
+}
+
+# Convert the video to GIF based on the availability of gifski
+if [ "$install_gifski" == "yes" ]; then
+    convert_with_gifski
+else
+    convert_with_ffmpeg
 fi
 
 echo "Conversion complete."
