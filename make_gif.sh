@@ -120,7 +120,7 @@ install_dependencies() {
                 fi
             done
         else
-            print_error "Unsupported Linux distribution. Only Debian-based distributions are supported."
+            print_error "Unsupported Linux distribution. Please install the dependencies manually."
             exit 1
         fi
     elif [ "$os_name" == "Darwin" ]; then
