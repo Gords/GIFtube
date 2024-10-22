@@ -87,7 +87,6 @@ install_dependencies() {
                 print_error "You need sudo privileges to install dependencies."
                 exit 1
             fi
-            sudo apt-get update
             for dep in "${deps_to_install[@]}"; do
                 if [ "$dep" = "gifski" ]; then
                     if ! command -v gifski &> /dev/null; then
@@ -138,7 +137,6 @@ install_dependencies() {
             print_error "Homebrew is not installed. Please install Homebrew and rerun the script."
             exit 1
         fi
-        brew update
         brew install "${deps_to_install[@]}"
     else
         print_error "Unsupported operating system: $os_name"
