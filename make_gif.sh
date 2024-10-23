@@ -15,6 +15,9 @@ echo -e "${green}
 88eee8 88 88      88  88ee8 88eeeee8 88eee 
 ${reset}"
 
+# Define config file path early in the script
+config_file="$HOME/.giftube_config"
+
 # Function to print error messages
 print_error() {
     echo -e "${red}Error: $1${reset}"
@@ -115,14 +118,14 @@ uninstall_dependencies() {
             # Debian/Ubuntu
             echo "Detected Debian/Ubuntu system"
             command -v ffmpeg >/dev/null 2>&1 && sudo apt-get remove -y ffmpeg
-            command -v yt-dlp >/dev/null 2>&1 && sudo apt-get remove -y yt-dlp
+            command -v yt-dlp >/dev/null 2>&1 && sudo rm -f /usr/local/bin/yt-dlp
             command -v gifski >/dev/null 2>&1 && sudo apt-get remove -y gifski
             sudo apt-get autoremove -y
         elif [ -f /etc/redhat-release ]; then
             # RHEL/CentOS/Fedora
             echo "Detected RHEL/CentOS/Fedora system"
             command -v ffmpeg >/dev/null 2>&1 && sudo dnf remove -y ffmpeg
-            command -v yt-dlp >/dev/null 2>&1 && sudo dnf remove -y yt-dlp
+            command -v yt-dlp >/dev/null 2>&1 && sudo rm -f /usr/local/bin/yt-dlp
             if command -v cargo &> /dev/null && command -v gifski &> /dev/null; then
                 cargo uninstall gifski
             fi
