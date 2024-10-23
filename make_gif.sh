@@ -83,6 +83,9 @@ install_gifski() {
     fi
 }
 
+# Move missing_deps declaration to the top, after the color definitions
+missing_deps=()
+
 # Check if curl or wget is installed
 if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
     echo "Neither curl nor wget is installed."
@@ -102,7 +105,7 @@ if [ "${#missing_deps[@]}" -ne 0 ]; then
     echo "Missing dependencies detected: ${missing_deps[*]}"
     read -p "Do you want to install them now? (y/n): " install_choice
     if [[ "$install_choice" =~ ^[Yy]$ ]]; then
-        install_dependencies "${missing_deps[@]}"
+        install_dependencies  # Remove args since they're not used
     else
         print_error "Cannot proceed without installing dependencies."
         exit 1
@@ -356,7 +359,7 @@ else
     palette="/tmp/palette.png"
     filters="fps=$fps,scale=$new_width:$new_height:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
     if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" -vf "$filters" -y "$output"; then
-        print_error "Failed to convert video to GIF using gifski"
+        print_error "Failed to convert video to GIF using FFmpeg"
         exit 1
     fi
     rm -f "$palette"
