@@ -31,18 +31,21 @@ install_dependencies() {
         if [ -f /etc/debian_version ] || [ -f /etc/lsb-release ]; then
             # Debian/Ubuntu
             echo "Detected Debian/Ubuntu system"
-            sudo apt-get install -y ffmpeg python3-pip
-            sudo -H pip3 install --upgrade yt-dlp
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+            # Install yt-dlp directly
+            sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+            sudo chmod a+rx /usr/local/bin/yt-dlp
         elif [ -f /etc/redhat-release ]; then
             # RHEL/CentOS/Fedora
             echo "Detected RHEL/CentOS/Fedora system"
-            sudo dnf install -y ffmpeg python3-pip
-            sudo -H pip3 install --upgrade yt-dlp
+            sudo dnf install -y ffmpeg
+            sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+            sudo chmod a+rx /usr/local/bin/yt-dlp
         elif [ -f /etc/arch-release ]; then
             # Arch Linux
             echo "Detected Arch Linux system"
-            sudo pacman -S ffmpeg python-pip
-            sudo -H pip3 install --upgrade yt-dlp
+            sudo pacman -S ffmpeg yt-dlp
         fi
     elif [ "$os_name" == "Darwin" ]; then
         # macOS
@@ -324,17 +327,33 @@ fi
 echo "Converting video to GIF..."
 if command -v gifski &> /dev/null; then
     echo "Using gifski for conversion..."
-    if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos" -f yuv4mpegpipe - | gifski -o "$output" --fps $fps --quality $quality -; then
-        print_error "Failed to convert video to GIF using gifski"
+    # First extract frames at full resolution
+    temp_dir=$(mktemp -d)
+    if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" \
+        -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos" \
+        "$temp_dir/frame%04d.png"; then
+        print_error "Failed to extract frames"
+        rm -rf "$temp_dir"
         exit 1
     fi
+    
+    # Then use gifski to create the GIF
+    if ! gifski --fps $fps --quality $quality --width $new_width --height $new_height \
+        -o "$output" "$temp_dir/frame"*.png; then
+        print_error "Failed to convert video to GIF using gifski"
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+    
+    # Clean up
+    rm -rf "$temp_dir"
 else
     echo "Using FFmpeg for conversion..."
     # Create a temporary palette for better quality
     palette="/tmp/palette.png"
     filters="fps=$fps,scale=$new_width:$new_height:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
     if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" -vf "$filters" -y "$output"; then
-        print_error "Failed to convert video to GIF using FFmpeg"
+        print_error "Failed to convert video to GIF using gifski"
         exit 1
     fi
     rm -f "$palette"
@@ -346,4 +365,3 @@ echo "Conversion complete."
 rm -f "$vname"
 
 echo "Process completed successfully! Your GIF is saved as '$output'."
-
