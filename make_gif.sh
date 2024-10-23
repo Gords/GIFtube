@@ -15,6 +15,9 @@ echo -e "${green}
 88eee8 88 88      88  88ee8 88eeeee8 88eee 
 ${reset}"
 
+# Define config file path early in the script
+config_file="$HOME/.giftube_config"
+
 # Function to print error messages
 print_error() {
     echo -e "${red}Error: $1${reset}"
@@ -23,72 +26,60 @@ print_error() {
 # Detect the operating system
 os_name=$(uname)
 
-# Check and install dependencies based on the operating system
-dependencies=("yt-dlp" "ffmpeg" "gifski")
-
+# Add this function after the os_name detection and before the dependency checks
 install_dependencies() {
-    deps_to_install=("$@")
+    echo "Installing dependencies..."
+    
     if [ "$os_name" == "Linux" ]; then
-        # Check for Debian/Ubuntu-based systems
         if [ -f /etc/debian_version ] || [ -f /etc/lsb-release ]; then
-            if ! sudo -v >/dev/null 2>&1; then
-                print_error "You need sudo privileges to install dependencies."
-                exit 1
-            fi
-            for dep in "${deps_to_install[@]}"; do
-                if [ "$dep" = "gifski" ]; then
-                    if ! command -v gifski &> /dev/null; then
-                        echo "Installing gifski from .deb package..."
-                        wget https://github.com/ImageOptim/gifski/releases/download/1.32.0/gifski_1.32.0-1_amd64.deb
-                        sudo dpkg -i gifski_1.32.0-1_amd64.deb
-                        rm gifski_1.32.0-1_amd64.deb
-                    fi
-                else
-                    sudo apt-get install -y "$dep"
-                fi
-            done
-        # Check for Fedora/Red Hat-based systems
+            # Debian/Ubuntu
+            echo "Detected Debian/Ubuntu system"
+            sudo apt-get update
+            sudo apt-get install -y ffmpeg
+            # Install yt-dlp directly
+            sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+            sudo chmod a+rx /usr/local/bin/yt-dlp
         elif [ -f /etc/redhat-release ]; then
-            if ! sudo -v >/dev/null 2>&1; then
-                print_error "You need sudo privileges to install dependencies."
-                exit 1
-            fi
-            sudo dnf install -y "${deps_to_install[@]}"
-            # Install Rust and gifski
-            if ! command -v cargo &> /dev/null; then
-                echo "Installing Rust..."
-                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-                source $HOME/.cargo/env
-            fi
-            cargo install gifski
-        # Check for Arch-based systems
+            # RHEL/CentOS/Fedora
+            echo "Detected RHEL/CentOS/Fedora system"
+            sudo dnf install -y ffmpeg
+            sudo curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp
+            sudo chmod a+rx /usr/local/bin/yt-dlp
         elif [ -f /etc/arch-release ]; then
-            if ! sudo -v >/dev/null 2>&1; then
-                print_error "You need sudo privileges to install dependencies."
-                exit 1
-            fi
-            sudo pacman -Sy --noconfirm "${deps_to_install[@]}"
-            # Install Rust and gifski
-            if ! command -v cargo &> /dev/null; then
-                echo "Installing Rust..."
-                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-                source $HOME/.cargo/env
-            fi
-            cargo install gifski
-        else
-            print_error "Unsupported Linux distribution"
-            exit 1
+            # Arch Linux
+            echo "Detected Arch Linux system"
+            sudo pacman -S ffmpeg yt-dlp
         fi
     elif [ "$os_name" == "Darwin" ]; then
-        # For macOS using Homebrew
-        if ! command -v brew >/dev/null 2>&1; then
-            print_error "Homebrew is not installed. Please install Homebrew and rerun the script."
-            exit 1
+        # macOS
+        echo "Detected macOS system"
+        brew install ffmpeg yt-dlp
+    fi
+    
+    echo "Dependencies have been installed."
+}
+
+# Check and install dependencies based on the operating system
+base_dependencies=("yt-dlp" "ffmpeg")
+
+# Function to install gifski specifically
+install_gifski() {
+    if [ "$os_name" == "Linux" ]; then
+        if [ -f /etc/debian_version ] || [ -f /etc/lsb-release ]; then
+            echo "Installing gifski from .deb package..."
+            wget https://github.com/ImageOptim/gifski/releases/download/1.32.0/gifski_1.32.0-1_amd64.deb
+            sudo dpkg -i gifski_1.32.0-1_amd64.deb
+            rm gifski_1.32.0-1_amd64.deb
+        elif [ -f /etc/redhat-release ] || [ -f /etc/arch-release ]; then
+            if ! command -v cargo &> /dev/null; then
+                echo "Installing Rust..."
+                curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+                source $HOME/.cargo/env
+            fi
+            cargo install gifski
         fi
-        brew install "${deps_to_install[@]}"
-    else
-        print_error "Unsupported operating system: $os_name"
-        exit 1
+    elif [ "$os_name" == "Darwin" ]; then
+        brew install gifski
     fi
 }
 
@@ -99,7 +90,7 @@ if ! command -v curl >/dev/null 2>&1 && ! command -v wget >/dev/null 2>&1; then
 fi
 
 missing_deps=()
-for dep in "${dependencies[@]}"
+for dep in "${base_dependencies[@]}"
 do
     if ! command -v "$dep" >/dev/null 2>&1; then
         echo "Dependency $dep is missing."
@@ -115,6 +106,100 @@ if [ "${#missing_deps[@]}" -ne 0 ]; then
     else
         print_error "Cannot proceed without installing dependencies."
         exit 1
+    fi
+fi
+
+# Add function to uninstall dependencies
+uninstall_dependencies() {
+    echo "Uninstalling dependencies..."
+    
+    if [ "$os_name" == "Linux" ]; then
+        if [ -f /etc/debian_version ] || [ -f /etc/lsb-release ]; then
+            # Debian/Ubuntu
+            echo "Detected Debian/Ubuntu system"
+            command -v ffmpeg >/dev/null 2>&1 && sudo apt-get remove -y ffmpeg
+            command -v yt-dlp >/dev/null 2>&1 && sudo rm -f /usr/local/bin/yt-dlp
+            command -v gifski >/dev/null 2>&1 && sudo apt-get remove -y gifski
+            sudo apt-get autoremove -y
+        elif [ -f /etc/redhat-release ]; then
+            # RHEL/CentOS/Fedora
+            echo "Detected RHEL/CentOS/Fedora system"
+            command -v ffmpeg >/dev/null 2>&1 && sudo dnf remove -y ffmpeg
+            command -v yt-dlp >/dev/null 2>&1 && sudo rm -f /usr/local/bin/yt-dlp
+            if command -v cargo &> /dev/null && command -v gifski &> /dev/null; then
+                cargo uninstall gifski
+            fi
+        elif [ -f /etc/arch-release ]; then
+            # Arch Linux
+            echo "Detected Arch Linux system"
+            command -v ffmpeg >/dev/null 2>&1 && sudo pacman -R ffmpeg
+            command -v yt-dlp >/dev/null 2>&1 && sudo pacman -R yt-dlp
+            if command -v cargo &> /dev/null && command -v gifski &> /dev/null; then
+                cargo uninstall gifski
+            fi
+        fi
+    elif [ "$os_name" == "Darwin" ]; then
+        # macOS
+        echo "Detected macOS system"
+        command -v ffmpeg >/dev/null 2>&1 && brew uninstall ffmpeg
+        command -v yt-dlp >/dev/null 2>&1 && brew uninstall yt-dlp
+        command -v gifski >/dev/null 2>&1 && brew uninstall gifski
+    fi
+    
+    # Remove config file if it exists
+    if [ -f "$config_file" ]; then
+        rm "$config_file"
+        echo "Removed configuration file"
+    fi
+    
+    echo "Dependencies have been uninstalled."
+    exit 0
+}
+
+# Add check for uninstall flag right after the banner
+if [ "$1" == "--uninstall" ]; then
+    read -p "Are you sure you want to uninstall all dependencies? (y/n): " confirm
+    if [[ "$confirm" =~ ^[Yy]$ ]]; then
+        uninstall_dependencies
+    else
+        echo "Uninstall cancelled."
+        exit 0
+    fi
+fi
+
+# Add this near the top of the script, after the color definitions
+config_file="$HOME/.giftube_config"
+
+# Add this function to handle gifski preference
+save_gifski_preference() {
+    local preference=$1
+    echo "INSTALL_GIFSKI=$preference" > "$config_file"
+}
+
+# Modify the gifski installation section
+if ! command -v gifski &> /dev/null; then
+    # Check if we have a saved preference
+    if [ -f "$config_file" ]; then
+        source "$config_file"
+    fi
+
+    # Only ask if we don't have a saved preference
+    if [ -z "$INSTALL_GIFSKI" ]; then
+        echo "Gifski is not installed. Gifski generally produces higher quality GIFs but requires additional installation."
+        read -p "Would you like to install gifski for better quality? (y/n): " install_gifski_choice
+        if [[ "$install_gifski_choice" =~ ^[Yy]$ ]]; then
+            save_gifski_preference "yes"
+            install_gifski
+        else
+            save_gifski_preference "no"
+            echo "Using FFmpeg for GIF conversion. You can change this later by removing $config_file"
+        fi
+    elif [ "$INSTALL_GIFSKI" == "yes" ]; then
+        echo "Installing gifski based on saved preference..."
+        install_gifski
+    else
+        echo "Skipping gifski installation based on saved preference."
+        echo "You can change this by removing $config_file"
     fi
 fi
 
@@ -241,11 +326,40 @@ if [ ! -f "$vname" ]; then
     exit 1
 fi
 
-# Convert the video to GIF using ffmpeg and gifski
+# Modified conversion section
 echo "Converting video to GIF..."
-if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos" -f yuv4mpegpipe - | gifski -o "$output" --fps $fps --quality $quality -; then
-    print_error "Failed to convert video to GIF"
-    exit 1
+if command -v gifski &> /dev/null; then
+    echo "Using gifski for conversion..."
+    # First extract frames at full resolution
+    temp_dir=$(mktemp -d)
+    if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" \
+        -vf "fps=$fps,scale=$new_width:$new_height:flags=lanczos" \
+        "$temp_dir/frame%04d.png"; then
+        print_error "Failed to extract frames"
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+    
+    # Then use gifski to create the GIF
+    if ! gifski --fps $fps --quality $quality --width $new_width --height $new_height \
+        -o "$output" "$temp_dir/frame"*.png; then
+        print_error "Failed to convert video to GIF using gifski"
+        rm -rf "$temp_dir"
+        exit 1
+    fi
+    
+    # Clean up
+    rm -rf "$temp_dir"
+else
+    echo "Using FFmpeg for conversion..."
+    # Create a temporary palette for better quality
+    palette="/tmp/palette.png"
+    filters="fps=$fps,scale=$new_width:$new_height:flags=lanczos,split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
+    if ! ffmpeg -v warning -stats -ss "$stt" -t "$dur" -i "$vname" -vf "$filters" -y "$output"; then
+        print_error "Failed to convert video to GIF using gifski"
+        exit 1
+    fi
+    rm -f "$palette"
 fi
 
 echo "Conversion complete."

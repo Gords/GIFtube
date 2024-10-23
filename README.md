@@ -1,60 +1,66 @@
 # GIFtube
 ## YouTube to GIF Converter
 
-Bash script to convert a YouTube video to a high-quality GIF file with a specified resolution, frame rate, start time, duration, aspect ratio, and quality. It utilizes `yt-dlp`, `ffmpeg`, and `gifski`.
+Bash script to convert a YouTube video to a high-quality GIF file with a specified resolution, frame rate, start time, duration, aspect ratio, and quality. It utilizes `yt-dlp`, `ffmpeg`, and optionally `gifski`.
 
 ![Berserk (1997). © Kentaro Miura, Hakusensha / VAP • NTV](demo.gif)
 
 ## Features
 
-- Download YouTube videos
-- Convert video clips to high-quality GIFs
-- Customizable resolution and frame rate
-- Selectable aspect ratio (16:9, 4:3, 1:1, or 9:16)
+- Download YouTube videos and convert to high-quality GIFs
+- Customizable resolution, frame rate, and aspect ratio (16:9, 4:3, 1:1, or 9:16)
 - Adjustable quality settings
-- Direct conversion from video to GIF without intermediate files
 - Automatic installation of missing dependencies
+- Saves user preferences for conversion method
+- Easy uninstallation
 
 ## Dependencies
 
+### Required
 - `yt-dlp` (for downloading YouTube videos)
 - `ffmpeg` (for video processing)
-- `gifski` (for high-quality GIF generation)
+
+### Optional
+- `gifski` (for higher quality GIF generation)
 
 The script automatically checks for missing dependencies and offers to install them on supported systems:
-- Ubuntu/Debian: Uses apt-get for yt-dlp and ffmpeg, and installs gifski from a .deb package
-- Fedora/Red Hat: Uses dnf
+- Ubuntu/Debian: Uses apt-get for ffmpeg and installs yt-dlp binary directly
+- Fedora/Red Hat: Uses dnf for ffmpeg and installs yt-dlp binary directly
 - Arch Linux: Uses pacman
 - macOS: Uses Homebrew
 
-If you prefer to install them manually or are using an unsupported system, please install the dependencies before running the script.
-
 ## Usage
 
-1. Save the script 
-2. Make the script executable by running `chmod +x make_gif.sh`
-3. Run the script with `./make_gif.sh` (or `sudo ./make_gif.sh` on Linux if it is your first time running it and you want the dependencies to be automatically installed)
-4. Follow the onscreen prompts
+1. Make the script executable: `chmod +x make_gif.sh`
+2. Run: `./make_gif.sh` (or `sudo ./make_gif.sh` on Linux for first-time installation)
+3. Follow the prompts to specify:
+   - YouTube URL
+   - Start time and duration
+   - Resolution and aspect ratio
+   - FPS (frames per second)
+   - Quality setting (High: 100, Medium: 80, Low: 60, or Custom: 1-100)
+   - Output filename
 
-The script will guide you through the following steps:
-- Enter the YouTube URL
-- Set the start time and duration for the GIF
-- Choose the output resolution
-- Select the aspect ratio
-- Specify the desired FPS (frames per second)
-- Choose the quality setting (High, Medium, Low, or Custom)
-- Enter the output filename
+### Uninstalling
+`./make_gif.sh --uninstall`
+- Removes all dependencies and configuration files
 
-The script will then download the video and convert it directly to a high-quality GIF using the selected parameters.
+### Conversion Methods
 
-## Quality Settings
+1. **FFmpeg** (Default)
+   - Faster conversion
+   - Smaller file sizes
+   - Uses palette generation
 
-- High: 100 (Best quality, largest file size)
-- Medium: 80 (Good balance between quality and file size)
-- Low: 60 (Smaller file size, lower quality)
-- Custom: 1-100 (User-defined, higher values mean better quality but larger file size)
+2. **Gifski** (Optional)
+   - Higher quality output
+   - Better color preservation
+   - Slower conversion
 
+Your preference for gifski is saved and can be changed by:
+- Running the uninstall command and reinstalling
+- Removing the `.giftube_config` file
 
 ## License
 
-This script is released under the [MIT License](https://opensource.org/licenses/MIT)
+[MIT License](https://opensource.org/licenses/MIT)
