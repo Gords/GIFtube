@@ -12,7 +12,7 @@ Bash script to convert a YouTube video to a high-quality GIF file with a specifi
 - Adjustable quality settings
 - Automatic installation of missing dependencies
 - Saves user preferences for conversion method
-- Easy uninstallation
+- Easy uninstall of dependencies
 
 ## Dependencies
 
