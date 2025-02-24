@@ -1,7 +1,7 @@
 # GIFtube
 ## YouTube to GIF Converter
 
-Bash script to convert a YouTube video to a high-quality GIF file with a specified resolution, frame rate, start time, duration, aspect ratio, and quality. It utilizes `yt-dlp`, `ffmpeg`, and optionally `gifski`.
+Bash script to convert a YouTube video to a high-quality GIF file with a specified resolution, frame rate, start time, duration, aspect ratio, and quality. Using `yt-dlp`, `ffmpeg`, and optionally `gifski`.
 
 ![Berserk (1997). © Kentaro Miura, Hakusensha / VAP • NTV](demo.gif)
 
