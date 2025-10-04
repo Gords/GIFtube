@@ -91,12 +91,21 @@ ipcMain.on('toMain', async (event, data) => {
       })
       .on('error', (err) => {
         console.error(err);
-        event.sender.send('fromMain', { success: false, error: err.message });
+        event.sender.send('fromMain', { 
+          success: false, 
+          error: 'Video processing failed. Please check your input and try again.' 
+        });
       })
       .save(outputPath);
 
   } catch (error) {
     console.error(error);
-    event.sender.send('fromMain', { success: false, error: error.message });
+    let userMessage = 'An unexpected error occurred. Please try again.';
+    if (error.message && error.message.includes('Invalid YouTube URL')) {
+      userMessage = 'Unable to download video. Please check the YouTube URL.';
+    } else if (error.message && error.message.toLowerCase().includes('ffmpeg')) {
+      userMessage = 'Video processing failed. Please check your input and try again.';
+    }
+    event.sender.send('fromMain', { success: false, error: userMessage });
   }
 });
