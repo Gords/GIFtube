@@ -1,0 +1,32 @@
+{
+  "name": "app",
+  "version": "1.0.0",
+  "description": "An Electron application to convert YouTube videos to high-quality GIFs.",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Gords/GIFtube.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Gords/GIFtube/issues"
+  },
+  "homepage": "https://github.com/Gords/GIFtube#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.55.1",
+    "electron": "^38.2.1"
+  },
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "gifski": "^1.7.1",
+    "ytdl-core": "^4.11.5"
+  }
+}

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>GIFtube</title>
+    <link rel="stylesheet" href="style.css">
+  </head>
+  <body>
+    <h1>GIFtube</h1>
+    <p>YouTube to GIF Converter</p>
+
+    <form id="conversion-form">
+      <div class="form-group">
+        <label for="youtube-url">YouTube URL:</label>
+        <input type="text" id="youtube-url" name="youtube-url" required>
+      </div>
+
+      <div class="form-group">
+        <label for="start-time">Start Time (HH:MM:SS):</label>
+        <input type="text" id="start-time" name="start-time" value="00:00:00" required>
+      </div>
+
+      <div class="form-group">
+        <label for="duration">Duration (seconds):</label>
+        <input type="number" id="duration" name="duration" value="5" required>
+      </div>
+
+      <div class="form-group">
+        <label for="resolution">Resolution:</label>
+        <select id="resolution" name="resolution">
+          <option value="720">720p</option>
+          <option value="480">480p</option>
+          <option value="360">360p</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="aspect-ratio">Aspect Ratio:</label>
+        <select id="aspect-ratio" name="aspect-ratio">
+            <option value="16:9">16:9</option>
+            <option value="4:3">4:3</option>
+            <option value="1:1">1:1</option>
+            <option value="9:16">9:16</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="fps">FPS (Frames Per Second):</label>
+        <input type="number" id="fps" name="fps" value="15" min="1" max="60" required>
+      </div>
+
+      <div class="form-group">
+        <label for="quality">Quality (1-100):</label>
+        <input type="number" id="quality" name="quality" value="80" min="1" max="100" required>
+      </div>
+
+      <div class="form-group">
+        <label for="output-filename">Output Filename:</label>
+        <input type="text" id="output-filename" name="output-filename" value="output.gif" required>
+      </div>
+
+      <button type="submit">Convert to GIF</button>
+    </form>
+
+    <div id="result-container">
+      <h2>Result</h2>
+      <p id="status">Waiting for conversion...</p>
+      <img id="result-gif" style="display: none; max-width: 100%;" />
+    </div>
+
+    <script src="./renderer.js"></script>
+  </body>
+</html>
