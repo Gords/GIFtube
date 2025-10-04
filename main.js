@@ -6,7 +6,11 @@ const ffmpeg = require('fluent-ffmpeg');
 const ffmpegInstaller = require('@ffmpeg-installer/ffmpeg');
 
 // Set the path for ffmpeg
-ffmpeg.setFfmpegPath(ffmpegInstaller.path.replace('app.asar', 'app.asar.unpacked'));
+ffmpeg.setFfmpegPath(
+  app.isPackaged
+    ? ffmpegInstaller.path.replace('app.asar', 'app.asar.unpacked')
+    : ffmpegInstaller.path
+);
 
 function createWindow() {
   const mainWindow = new BrowserWindow({
