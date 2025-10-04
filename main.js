@@ -66,8 +66,21 @@ ipcMain.on('toMain', async (event, data) => {
     const maxColors = Math.round(2 + (quality - 1) * (254 / 99));
 
     // Using ffmpeg's two-pass method for higher quality GIFs
-    const complexFilter = `fps=${fps},scale=-1:${resolution}:flags=lanczos,crop=ih*${ar_w}/${ar_h}:ih,split[s0][s1];[s0]palettegen=max_colors=${maxColors}:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle`;
+    const filterFps = `fps=${fps}`;
+    const filterScale = `scale=-1:${resolution}:flags=lanczos`;
+    const filterCrop = `crop=ih*${ar_w}/${ar_h}:ih`;
+    const filterSplit = `split[s0][s1]`;
+    const filterPalettegen = `[s0]palettegen=max_colors=${maxColors}:stats_mode=diff[p]`;
+    const filterPaletteuse = `[s1][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle`;
 
+    const complexFilter = [
+      // Video processing chain
+      `${filterFps},${filterScale},${filterCrop},${filterSplit};`,
+      // Palette generation
+      `${filterPalettegen};`,
+      // Palette use
+      `${filterPaletteuse}`
+    ].join('');
     ffmpeg(videoStream)
       .setStartTime(startTime)
       .setDuration(duration)
