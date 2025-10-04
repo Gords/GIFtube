@@ -58,8 +58,11 @@ ipcMain.on('toMain', async (event, data) => {
 
     const [ar_w, ar_h] = aspectRatio.split(':').map(Number);
 
+    // Map the 1-100 quality scale to the 2-256 max_colors scale for palettegen
+    const maxColors = Math.round(2 + (quality - 1) * (254 / 99));
+
     // Using ffmpeg's two-pass method for higher quality GIFs
-    const complexFilter = `fps=${fps},scale=-1:${resolution}:flags=lanczos,crop=ih*${ar_w}/${ar_h}:ih,split[s0][s1];[s0]palettegen=stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle`;
+    const complexFilter = `fps=${fps},scale=-1:${resolution}:flags=lanczos,crop=ih*${ar_w}/${ar_h}:ih,split[s0][s1];[s0]palettegen=max_colors=${maxColors}:stats_mode=diff[p];[s1][p]paletteuse=dither=bayer:bayer_scale=5:diff_mode=rectangle`;
 
     ffmpeg(videoStream)
       .setStartTime(startTime)
