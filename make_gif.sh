@@ -21,7 +21,7 @@ ${reset}"
 
 # Function to print error messages
 print_error() {
-    echo -e "${red}Error: $1${reset}"
+    echo -e "${red}Error: $1${reset}" >&2
 }
 
 # Function to install dependencies
@@ -72,7 +72,7 @@ check_and_install_dependencies() {
 
     if [ "${#missing_deps[@]}" -ne 0 ]; then
         echo "Missing dependencies detected: ${missing_deps[*]}"
-        read -p "Do you want to install them now? (y/n): " install_choice
+        read -rp "Do you want to install them now? (y/n): " install_choice
         if [[ "$install_choice" =~ ^[Yy]$ ]]; then
             install_dependencies
         else
@@ -115,7 +115,7 @@ uninstall_dependencies() {
 
 # Function to handle the uninstall flag
 handle_uninstall() {
-    read -p "Are you sure you want to uninstall all dependencies? (y/n): " confirm
+    read -rp "Are you sure you want to uninstall all dependencies? (y/n): " confirm
     if [[ "$confirm" =~ ^[Yy]$ ]]; then
         uninstall_dependencies
     else
@@ -136,7 +136,7 @@ get_validated_input() {
     local error_msg=$4
 
     while true; do
-        read -p "$prompt" input
+        read -rp "$prompt" input
 
         # Use default if empty
         if [ -z "$input" ] && [ -n "$default_value" ]; then
@@ -171,10 +171,10 @@ get_validated_input() {
 # Function to collect all user inputs
 collect_user_inputs() {
     # Get URL
-    read -p "Enter the YouTube URL: " url
+    read -rp "Enter the YouTube URL: " url
     while [ -z "$url" ]; do
         print_error "URL cannot be empty."
-        read -p "Enter the YouTube URL: " url
+        read -rp "Enter the YouTube URL: " url
     done
 
     # Get time values
@@ -217,10 +217,10 @@ collect_user_inputs() {
     fps=$(get_validated_input "Enter the desired FPS (recommended: 10-30): " "number" "" "FPS must be a number.")
 
     # Get output filename
-    read -p "Enter the output filename (without .gif extension): " output
+    read -rp "Enter the output filename (without .gif extension): " output
     while [ -z "$output" ]; do
         print_error "Filename cannot be empty."
-        read -p "Enter the output filename (without .gif extension): " output
+        read -rp "Enter the output filename (without .gif extension): " output
     done
 
     # Automatically append .gif to the filename if not present
@@ -278,9 +278,9 @@ main() {
 
     # Download video
     echo "Downloading video..."
-    vname="_temp_video_$$.mp4"
+    vname="${TMPDIR:-/tmp}/giftube_video_$$.mp4"
     trap 'rm -f "$vname"' EXIT
-    if ! yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" -o "$vname" -- "$url"; then
+    if ! yt-dlp -f "bestvideo[ext=mp4]/best[ext=mp4]" -o "$vname" -- "$url"; then
         print_error "Failed to download video"
         exit 1
     fi
