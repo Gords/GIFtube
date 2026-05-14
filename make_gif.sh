@@ -172,6 +172,10 @@ get_validated_input() {
 collect_user_inputs() {
     # Get URL
     read -p "Enter the YouTube URL: " url
+    while [ -z "$url" ]; do
+        print_error "URL cannot be empty."
+        read -p "Enter the YouTube URL: " url
+    done
 
     # Get time values
     stt=$(get_validated_input "Enter the start time (in seconds): " "number" "" "Start time must be a number.")
@@ -183,7 +187,7 @@ collect_user_inputs() {
     echo "2. 720p"
     echo "3. 480p"
     echo "4. 240p"
-    choice=$(get_validated_input "Enter your choice (1-4): " "choice" "2" "Invalid choice. Defaulting to 720p.")
+    choice=$(get_validated_input "Enter your choice (1-4): " "choice" "2" "Invalid choice. Please enter 1-4 or press Enter for 720p.")
 
     # Set resolution values
     case $choice in
@@ -199,7 +203,7 @@ collect_user_inputs() {
     echo "2. 4:3 (Standard)"
     echo "3. 1:1 (Square)"
     echo "4. 9:16 (Vertical Video)"
-    aspect_choice=$(get_validated_input "Enter your choice (1-4): " "choice" "1" "Invalid choice. Defaulting to 16:9.")
+    aspect_choice=$(get_validated_input "Enter your choice (1-4): " "choice" "1" "Invalid choice. Please enter 1-4 or press Enter for 16:9.")
 
     # Set aspect ratio values
     case $aspect_choice in
@@ -214,6 +218,10 @@ collect_user_inputs() {
 
     # Get output filename
     read -p "Enter the output filename (without .gif extension): " output
+    while [ -z "$output" ]; do
+        print_error "Filename cannot be empty."
+        read -p "Enter the output filename (without .gif extension): " output
+    done
 
     # Automatically append .gif to the filename if not present
     if [[ $output != *.gif ]]; then
@@ -270,8 +278,9 @@ main() {
 
     # Download video
     echo "Downloading video..."
-    vname="_a.mp4"
-    if ! yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" -o "$vname" "$url"; then
+    vname="_temp_video_$$.mp4"
+    trap 'rm -f "$vname"' EXIT
+    if ! yt-dlp -f "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best" -o "$vname" -- "$url"; then
         print_error "Failed to download video"
         exit 1
     fi
@@ -283,9 +292,6 @@ main() {
 
     # Convert video to GIF
     convert_video_to_gif "$vname" "$output" "$stt" "$dur" "$fps" "$new_width" "$new_height"
-
-    # Clean up
-    rm -f "$vname"
 
     echo "Process completed successfully! Your GIF is saved as '$output'."
 }
