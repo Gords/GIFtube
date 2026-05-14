@@ -278,9 +278,9 @@ main() {
 
     # Download video
     echo "Downloading video..."
-    vname="${TMPDIR:-/tmp}/giftube_video_$$.mp4"
+    vname=$(mktemp "${TMPDIR:-/tmp}/giftube_video.XXXXXX.mp4")
     trap 'rm -f "$vname"' EXIT
-    if ! yt-dlp -f "bestvideo[ext=mp4]/best[ext=mp4]" -o "$vname" -- "$url"; then
+    if ! yt-dlp -f "bestvideo[ext=mp4]/best[ext=mp4]/best" -o "$vname" -- "$url"; then
         print_error "Failed to download video"
         exit 1
     fi
