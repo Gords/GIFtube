@@ -28,7 +28,7 @@ The script flows linearly through `main()`:
 1. **Banner** → `show_banner()`
 2. **Dep check** → `check_and_install_dependencies()` — checks for `yt-dlp` and `ffmpeg`, offers per-OS installation if missing
 3. **Input collection** → `collect_user_inputs()` — URL, start time, duration, resolution (1080/720/480/240), aspect ratio (16:9/4:3/1:1/9:16), FPS, output filename. Dimensions are recalculated to fit the chosen aspect ratio.
-4. **Download** → `yt-dlp` fetches best mp4 to `_a.mp4`
+4. **Download** → `yt-dlp` fetches best mp4 to a PID-based temp file; cleaned up via `trap` on exit
 5. **Conversion** → `convert_video_to_gif()` — single-pass ffmpeg with `palettegen`/`paletteuse` split/merge filtergraph for quality
 6. **Cleanup** → removes downloaded video
 
